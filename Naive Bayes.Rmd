@@ -1,4 +1,57 @@
+---
+title: "MIMIC-III Naive Bayes on SIRS Data"
+author: "<h3><p>Yuzhe You</p><p>vyou@umich.edu</p></h3>"
+date: "`r format(Sys.time(), '%B %Y')`"
+output:
+  html_document:
+    highlight: tango
+    number_sections: yes
+    theme: default
+    toc: yes
+    toc_depth: 3
+    toc_float:
+      collapsed: yes
+      smooth_scroll: yes
+subtitle: <h2><u>Winter 2019, SOCR-MDP</u></h2>
+---
+**Random Seed Set**
+```{r message=F, warning=F}
+set.seed(123456)
+```
 
+# Exploring and preparing the data
+First we are going to create the sample cohort of patients and extracted their diagnosis codes and the physiologic predictors used in the SIRS criteria by loading the CSV.
+
+```{r eval=T, message=F, warning=F}
+cohort_data <- read.csv('../SIRS/sample_data.csv')
+str(cohort_data)
+```
+
+We'll also choose to remove rows that contain missing variables in order to make visualization and exploratory data analysis easier.
+
+```{r eval=T, message=F, warning=F}
+cohort_data = cohort_data[complete.cases(cohort_data),]
+```
+
+Next we are going to calculate SIRS scores for all patients
+
+```{r eval=T, message=F, warning=F}
+for (i in 1:nrow(cohort_data)) {
+  cohort_data$sirs.score[i] <-sum(as.numeric(cohort_data$temperature[i] > 38 | 
+                                             cohort_data$temperature[i] < 36),
+                                  as.numeric(cohort_data$heartrate[i] > 90),
+                                  as.numeric(cohort_data$resprate[i]>20 |
+                                             cohort_data$paco2[i] < 32),
+                                  as.numeric(cohort_data$wbc[i] > 12 | cohort_data$wbc[i] < 4))
+}
+```
+
+Change the `sirs.score` variable into a factor.
+
+```{r eval=T, message=F, warning=F}
+cohort_data$sirs.score <- factor(cohort_data$sirs.score)
+str(cohort_data$sirs.score)
+```
 
 
 
