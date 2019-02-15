@@ -1,5 +1,5 @@
 ---
-title: "MIMIC-III Naive Bayes on SIRS Data"
+title: "MIMIC-III Naive Bayes Model on SIRS Data"
 author: "<h3><p>Yuzhe You</p><p>vyou@umich.edu</p></h3>"
 date: "`r format(Sys.time(), '%B %Y')`"
 output:
