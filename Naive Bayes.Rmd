@@ -59,8 +59,48 @@ We'll also choose to remove rows that contain missing variables in order to make
 cohort_data = cohort_data[complete.cases(cohort_data),]
 ```
 
+## Data Preparation - creating training and test datasets
 
+```{r eval=T, message=F, warning=F}
+set.seed(12345)
+subset_int <- sample(nrow(cohort_data), floor(nrow(cohort_data)*0.8))
+# 80% training + 20% testing
+cohort_data_train <- cohort_data[subset_int, ]
+cohort_data_test <- cohort_data[-subset_int, ]
+```
 
+Let's examine the distribution of sepsis in the training anf test datasets.
+```{r eval=T, message=F, warning=F}
+prop.table(table(cohort_data_train$septic))
+```
+
+```{r eval=T, message=F, warning=F}
+prop.table(table(cohort_data_test$septic))
+```
+
+# Model Training #1 - without SIRS score
+
+```{r eval=T, message=F, warning=F}
+library(e1071)
+classifier <- naiveBayes(cohort_data_train, as.factor(cohort_data_train$septic))
+```
+
+```{r eval=T, message=F, warning=F}
+pred <- predict(classifier, cohort_data_test)
+```
+
+## Evaluate model performance
+
+```{r eval=T, message=F, warning=F}
+#install.packages(c("gmodels"))
+library(gmodels)
+```
+
+```{r eval=T, message=F, warning=F}
+CrossTable(pred, cohort_data_test$septic)
+```
+
+# Model Training #2 - with solely SIRS Score
 ## Calculation of SIRS scores
 Here we are going to calculate SIRS scores for all patients by using the SIRS criteria:
 
@@ -103,31 +143,33 @@ cohort_data_train <- cohort_data[subset_int, ]
 cohort_data_test <- cohort_data[-subset_int, ]
 ```
 
-Let's examine the distribution of sepsis in the training anf test datasets.
 ```{r eval=T, message=F, warning=F}
-prop.table(table(cohort_data_train$septic))
-```
-
-```{r eval=T, message=F, warning=F}
-prop.table(table(cohort_data_test$septic))
-```
-
-# Training a model on the data
-```{r eval=T, message=F, warning=F}
-library(e1071)
 classifier <- naiveBayes(cohort_data_train[, c("sirs.score")], as.factor(cohort_data_train$septic))
-classifier <- naiveBayes(cohort_data_train, as.factor(cohort_data_train$septic))
 ```
 
 ```{r eval=T, message=F, warning=F}
 pred <- predict(classifier, cohort_data_test)
 ```
 
-# Evaluate model performance
+## Evaluate model performance
 
 ```{r eval=T, message=F, warning=F}
 #install.packages(c("gmodels"))
 library(gmodels)
+```
+
+```{r eval=T, message=F, warning=F}
+CrossTable(pred, cohort_data_test$septic)
+```
+
+# Model Training #3 - with SIRS Score
+
+```{r eval=T, message=F, warning=F}
+classifier <- naiveBayes(cohort_data_train, as.factor(cohort_data_train$septic))
+```
+
+```{r eval=T, message=F, warning=F}
+pred <- predict(classifier, cohort_data_test)
 ```
 
 ```{r eval=T, message=F, warning=F}
