@@ -15,6 +15,9 @@ output:
 subtitle: <h2><u>Winter 2019, SOCR-MDP</u></h2>
 ---
 ```{r message=F, warning=F}
+# Data preparation
+library('psych')          # descriptive stats
+
 # Plots and tables
 library('knitr')          # knitting Rmd to HTML; kable() function
 library('kableExtra')     # extra formating options for knitr tables
@@ -58,8 +61,15 @@ cohort_data = cohort_data[complete.cases(cohort_data),]
 
 
 
-##Calculation of SIRS scores
-Here we are going to calculate SIRS scores for all patients
+## Calculation of SIRS scores
+Here we are going to calculate SIRS scores for all patients by using the SIRS criteria:
+
+Two or more of:
+
+* Temperature > 38 °C or < 36 °C
+  + Heart rate > 90min
+  + Respiratory rate > 20/min or PaCO₂ < 32 mm Hg (4.3 kPa)
+  + White blood cell count > 12 000/mm³ or < 4000/mm³ or > 10% immature bands
 
 ```{r eval=T, message=F, warning=F}
 for (i in 1:nrow(cohort_data)) {
@@ -83,5 +93,43 @@ str(cohort_data$sirs.score)
 table(cohort_data$sirs.score)
 ```
 
+## Data Preparation - creating training and test datasets
 
+```{r eval=T, message=F, warning=F}
+set.seed(12345)
+subset_int <- sample(nrow(cohort_data), floor(nrow(cohort_data)*0.8))
+# 80% training + 20% testing
+cohort_data_train <- cohort_data[subset_int, ]
+cohort_data_test <- cohort_data[-subset_int, ]
+```
 
+Let's examine the distribution of sepsis in the training anf test datasets.
+```{r eval=T, message=F, warning=F}
+prop.table(table(cohort_data_train$septic))
+```
+
+```{r eval=T, message=F, warning=F}
+prop.table(table(cohort_data_test$septic))
+```
+
+# Training a model on the data
+```{r eval=T, message=F, warning=F}
+library(e1071)
+classifier <- naiveBayes(cohort_data_train[, c("sirs.score")], as.factor(cohort_data_train$septic))
+classifier <- naiveBayes(cohort_data_train, as.factor(cohort_data_train$septic))
+```
+
+```{r eval=T, message=F, warning=F}
+pred <- predict(classifier, cohort_data_test)
+```
+
+# Evaluate model performance
+
+```{r eval=T, message=F, warning=F}
+#install.packages(c("gmodels"))
+library(gmodels)
+```
+
+```{r eval=T, message=F, warning=F}
+CrossTable(pred, cohort_data_test$septic)
+```

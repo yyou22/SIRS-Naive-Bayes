@@ -259,7 +259,10 @@ Yuzhe You
 </div>
 
 
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Plots and tables</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Data preparation</span>
+<span class="kw">library</span>(<span class="st">'psych'</span>)          <span class="co"># descriptive stats</span>
+
+<span class="co"># Plots and tables</span>
 <span class="kw">library</span>(<span class="st">'knitr'</span>)          <span class="co"># knitting Rmd to HTML; kable() function</span>
 <span class="kw">library</span>(<span class="st">'kableExtra'</span>)     <span class="co"># extra formating options for knitr tables</span>
 <span class="kw">library</span>(<span class="st">'ggplot2'</span>)        <span class="co"># 2d plotting</span>
@@ -484,7 +487,14 @@ FALSE
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cohort_data =<span class="st"> </span>cohort_data[<span class="kw">complete.cases</span>(cohort_data),]</code></pre></div>
 <div id="calculation-of-sirs-scores" class="section level2">
 <h2><span class="header-section-number">1.1</span> Calculation of SIRS scores</h2>
-<p>Here we are going to calculate SIRS scores for all patients</p>
+<p>Here we are going to calculate SIRS scores for all patients by using the SIRS criteria:</p>
+<p>Two or more of:</p>
+<ul>
+<li>Temperature &gt; 38 °C or &lt; 36 °C</li>
+<li>Heart rate &gt; 90min</li>
+<li>Respiratory rate &gt; 20/min or PaCO₂ &lt; 32 mm Hg (4.3 kPa)</li>
+<li>White blood cell count &gt; 12 000/mm³ or &lt; 4000/mm³ or &gt; 10% immature bands</li>
+</ul>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(cohort_data)) {
   cohort_data<span class="op">$</span>sirs.score[i] &lt;-<span class="kw">sum</span>(<span class="kw">as.numeric</span>(cohort_data<span class="op">$</span>temperature[i] <span class="op">&gt;</span><span class="st"> </span><span class="dv">38</span> <span class="op">|</span><span class="st"> </span>
 <span class="st">                                             </span>cohort_data<span class="op">$</span>temperature[i] <span class="op">&lt;</span><span class="st"> </span><span class="dv">36</span>),
@@ -502,6 +512,71 @@ FALSE
 ##    0    1    2    3    4 
 ##  633 1116  821  456   93</code></pre>
 </div>
+<div id="data-preparation---creating-training-and-test-datasets" class="section level2">
+<h2><span class="header-section-number">1.2</span> Data Preparation - creating training and test datasets</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">12345</span>)
+subset_int &lt;-<span class="st"> </span><span class="kw">sample</span>(<span class="kw">nrow</span>(cohort_data), <span class="kw">floor</span>(<span class="kw">nrow</span>(cohort_data)<span class="op">*</span><span class="fl">0.8</span>))
+<span class="co"># 80% training + 20% testing</span>
+cohort_data_train &lt;-<span class="st"> </span>cohort_data[subset_int, ]
+cohort_data_test &lt;-<span class="st"> </span>cohort_data[<span class="op">-</span>subset_int, ]</code></pre></div>
+<p>Let’s examine the distribution of sepsis in the training anf test datasets.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">prop.table</span>(<span class="kw">table</span>(cohort_data_train<span class="op">$</span>septic))</code></pre></div>
+<pre><code>## 
+##     FALSE      TRUE 
+## 0.8633267 0.1366733</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">prop.table</span>(<span class="kw">table</span>(cohort_data_test<span class="op">$</span>septic))</code></pre></div>
+<pre><code>## 
+##     FALSE      TRUE 
+## 0.8541667 0.1458333</code></pre>
+</div>
+</div>
+<div id="training-a-model-on-the-data" class="section level1">
+<h1><span class="header-section-number">2</span> Training a model on the data</h1>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(e1071)
+classifier &lt;-<span class="st"> </span><span class="kw">naiveBayes</span>(cohort_data_train[, <span class="kw">c</span>(<span class="st">&quot;sirs.score&quot;</span>)], <span class="kw">as.factor</span>(cohort_data_train<span class="op">$</span>septic))
+classifier &lt;-<span class="st"> </span><span class="kw">naiveBayes</span>(cohort_data_train, <span class="kw">as.factor</span>(cohort_data_train<span class="op">$</span>septic))</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">pred &lt;-<span class="st"> </span><span class="kw">predict</span>(classifier, cohort_data_test)</code></pre></div>
+</div>
+<div id="evaluate-model-performance" class="section level1">
+<h1><span class="header-section-number">3</span> Evaluate model performance</h1>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#install.packages(c(&quot;gmodels&quot;))</span>
+<span class="kw">library</span>(gmodels)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">CrossTable</span>(pred, cohort_data_test<span class="op">$</span>septic)</code></pre></div>
+<pre><code>## 
+##  
+##    Cell Contents
+## |-------------------------|
+## |                       N |
+## | Chi-square contribution |
+## |           N / Row Total |
+## |           N / Col Total |
+## |         N / Table Total |
+## |-------------------------|
+## 
+##  
+## Total Observations in Table:  624 
+## 
+##  
+##              | cohort_data_test$septic 
+##         pred |     FALSE |      TRUE | Row Total | 
+## -------------|-----------|-----------|-----------|
+##        FALSE |       531 |         0 |       531 | 
+##              |    13.221 |    77.438 |           | 
+##              |     1.000 |     0.000 |     0.851 | 
+##              |     0.996 |     0.000 |           | 
+##              |     0.851 |     0.000 |           | 
+## -------------|-----------|-----------|-----------|
+##         TRUE |         2 |        91 |        93 | 
+##              |    75.488 |   442.143 |           | 
+##              |     0.022 |     0.978 |     0.149 | 
+##              |     0.004 |     1.000 |           | 
+##              |     0.003 |     0.146 |           | 
+## -------------|-----------|-----------|-----------|
+## Column Total |       533 |        91 |       624 | 
+##              |     0.854 |     0.146 |           | 
+## -------------|-----------|-----------|-----------|
+## 
+## </code></pre>
 </div>
 
 
