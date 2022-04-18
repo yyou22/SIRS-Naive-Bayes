@@ -1,6 +1,6 @@
 ---
 title: "MIMIC-III Naive Bayes Model on SIRS Data"
-author: "<h3><p>Yuzhe (Vanessa) You vyou@umich.edu</p></h3> <h3><p>Ziyuan Sun ziyuans@umich.edu</p></h3>"
+author: "<h3><p>Yuzhe You vyou@umich.edu</p></h3> <h3><p>Ziyuan Sun ziyuans@umich.edu</p></h3>"
 date: "`r format(Sys.time(), '%B %Y')`"
 output:
   html_document:
@@ -247,7 +247,7 @@ c<-cbind(cohort_data$temperature,cohort_data$heartrate,cohort_data$resprate,coho
 colnames(c)<-c("temperature","heartrate","resprate","paco2","wbc")
 cor(c)
 ```
-From the correlation matrix, we can see that most factors are not strongly correlated to oters. Also, naive bayes algorithm is a robust approach, so our model using temperature, heartrate, resprate, paco2 and wbc is still working.
+From the correlation matrix, we can see that most factors are not strongly correlated to others. Also, naive bayes algorithm is a robust approach, so our model using temperature, heartrate, resprate, paco2 and wbc is still working.
 
 On the other hand, if we use sirs score as only factor in our naive bayes algorithm, according to the formula of naive bayes model, the error will be significant. That is the reason our model only with sirs score does not work well.
 
