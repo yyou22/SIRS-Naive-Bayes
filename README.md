@@ -10,4 +10,4 @@ In this study, we investigate the performance of the Naive Bayes Model using thr
 * Using both `temperature`, `hearrate`, `resprate`, `paco2`, `wbc` and the patients' SIRS scores
 
 See here for the full documentation presented in HTML format:
-https://yyyyyyou.github.io/SIRS-Naive-Bayes/
+https://yyou22.github.io/SIRS-Naive-Bayes/
